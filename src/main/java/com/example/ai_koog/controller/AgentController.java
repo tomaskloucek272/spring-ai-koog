@@ -1,6 +1,5 @@
 package com.example.ai_koog.controller;
 
-import com.example.ai_koog.records.PersonEligibilityResult;
 import com.example.ai_koog.service.AgentService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -16,7 +15,7 @@ public class AgentController {
     }
 
     @PostMapping("/api/agent/messages")
-    public PersonEligibilityResult sendMessage(@RequestBody ChatRequest request) {
+    public String sendMessage(@RequestBody ChatRequest request) {
         return agentService.ask(request.message());
     }
 

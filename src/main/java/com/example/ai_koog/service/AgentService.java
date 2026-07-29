@@ -1,6 +1,8 @@
 package com.example.ai_koog.service;
 
 import ai.koog.agents.core.agent.AIAgent;
+import ai.koog.agents.core.agent.AIAgentService;
+import ai.koog.agents.core.agent.AIAgentTool;
 import ai.koog.agents.core.agent.entity.AIAgentEdge;
 import ai.koog.agents.core.agent.entity.AIAgentGraphStrategy;
 import ai.koog.agents.core.agent.entity.AIAgentSubgraph;
@@ -9,6 +11,7 @@ import ai.koog.agents.core.tools.ToolRegistry;
 import ai.koog.agents.core.tools.reflect.ToolSet;
 import ai.koog.prompt.executor.clients.openai.OpenAIModels;
 import ai.koog.prompt.executor.model.PromptExecutor;
+import ai.koog.serialization.TypeToken;
 import com.example.ai_koog.records.AccountApplicationRequest;
 import com.example.ai_koog.records.AccountRegistryCheckRecord;
 import com.example.ai_koog.records.PersonEligibilityResult;
@@ -30,7 +33,7 @@ public class AgentService {
 
     private static final Logger log = LoggerFactory.getLogger(AgentService.class);
 
-    private final AIAgent<String, PersonEligibilityResult> eligibilityAgent;
+    private final AIAgent<String, String> chatAgent;
 
     public AgentService(final PromptExecutor promptExecutor) {
         var accountRegistryTool = new AccountRegistryCheckTool();
@@ -45,97 +48,145 @@ public class AgentService {
 
         var strategy = createStrategy(personRegistryCheckTool, accountRegistryTool, debtRegistryCheckTool);
 
-        this.eligibilityAgent = AIAgent.<String, PersonEligibilityResult>builder()
+        var eligibilityAgentService = AIAgentService.<AccountApplicationRequest, PersonEligibilityResult>builder()
                 .promptExecutor(promptExecutor)
                 .llmModel(OpenAIModels.Chat.GPT5_2)
                 .toolRegistry(eligibilityToolRegistry)
                 .graphStrategy(strategy)
                 .maxIterations(100)
                 .build();
+
+        var eligibilityCheckTool = new AIAgentTool<AccountApplicationRequest, PersonEligibilityResult>(
+                eligibilityAgentService,
+                "eligibilityCheck",
+                "Runs the full account-opening eligibility check (account limits, debt registry, age) "
+                        + "for an applicant and returns whether the application is approved or rejected.",
+                "A complete AccountApplicationRequest with a known subjectIdentifier and accountType — "
+                        + "never call this tool with a guessed, empty, or partial value.",
+                TypeToken.of(AccountApplicationRequest.class),
+                TypeToken.of(PersonEligibilityResult.class),
+                null);
+
+        var chatToolRegistry = ToolRegistry.builder()
+                .tool(eligibilityCheckTool)
+                .build();
+
+        this.chatAgent = AIAgent.<String, String>builder()
+                .promptExecutor(promptExecutor)
+                .llmModel(OpenAIModels.Chat.GPT5_2)
+                .toolRegistry(chatToolRegistry)
+                .systemPrompt("""
+                        You are a front-door assistant for account eligibility checks.
+
+                        RULES:
+                        - You need exactly two pieces of information: subjectIdentifier and accountType.
+                        - If either is missing, ask the user for it directly, be interactive —
+                          never guess or invent a value yourself.
+                        - As soon as you have both subjectIdentifier and accountType, call the eligibilityCheck
+                          tool with the complete AccountApplicationRequest.
+                        - Never call eligibilityCheck with a guessed, empty, or partial value.
+                        - After eligibilityCheck returns, respond with ONLY a valid JSON representation of
+                          PersonEligibilityResult (no markdown, no extra commentary).
+                        - If the user asks for anything else, answer normally from your general knowledge.
+                        """)
+                .maxIterations(100)
+                .build();
     }
 
-    private AIAgentGraphStrategy<String, PersonEligibilityResult> createStrategy(
+    private AIAgentGraphStrategy<AccountApplicationRequest, PersonEligibilityResult> createStrategy(
             ToolSet personRegistryTool,
             ToolSet accountRegistryTool,
             ToolSet registryCheckTool
     ) {
-        var extractNode = AIAgentSubgraph.builder()
-                .withInput(String.class)
-                .withOutput(AccountApplicationRequest.class)
-                .withToolSelectionStrategy(ToolSelectionStrategy.NONE.INSTANCE)
-                .withTask(input -> """
-            Extract data from the user input into AccountApplicationRequest.
-            You MUST always return a structured AccountApplicationRequest — never reply in plain text,
-            never refuse, never ask a clarifying question yourself, even if the input is empty,
-            unrelated, or incomplete.
-
-            RULES (strict):
-            - If subjectIdentifier is NOT explicitly stated in the text → set subjectIdentifier = "UNKNOWN"
-            - If accountType is NOT explicitly stated → set accountType = "CURRENT"
-            - These two fallback values are the ONLY values you may use when data is missing.
-              Do not invent any other information.
-
-            User text:
-            """ + input)
-                .usingLLM(OpenAIModels.Chat.GPT5_2)
-                .build();
-
         var askForMissingData = AIAgentSubgraph.builder()
                 .withInput(AccountApplicationRequest.class)
                 .withOutput(String.class)
                 .withToolSelectionStrategy(ToolSelectionStrategy.NONE.INSTANCE)
                 .withTask(input -> """
-                    Graph doesn't have complete data, tell it to the user, be interactive like ChatGPT and ask for subjectIdentifier and accountType.
-                """)
+                        The application is missing required data (subjectIdentifier and/or accountType).
+                        Write a short, friendly message asking the user to provide subjectIdentifier and accountType.
+                        Do not invent values. Reply in plain text only.
+                        """)
                 .usingLLM(OpenAIModels.Chat.GPT5_2)
                 .build();
+
+        // withTask subgraphs MUST always produce a tool call (registry tool and/or finish tool).
+        // Plain-text answers cause: IllegalStateException: Subgraph with task must always call tools...
 
         var accountCheckNode = AIAgentSubgraph.builder()
                 .withInput(AccountApplicationRequest.class)
                 .withOutput(AccountRegistryCheckRecord.class)
                 .limitedTools(accountRegistryTool)
-                .withTask(input -> "Check whether the applicant may open a new account:\n" + input)
-                .usingLLM(OpenAIModels.Chat.GPT4_1Mini)
+                .withTask(input -> """
+                        You MUST use tools. Do NOT answer with plain text only.
+
+                        Task:
+                        1. Call the account registry check tool with this AccountApplicationRequest:
+                        %s
+                        2. After you receive the tool result, finish by producing an AccountRegistryCheckRecord
+                           (approved, existingAccountCount, rejectionReason, subjectIdentifier, accountType, etc.).
+
+                        Never invent data. Never respond with free-form text only.
+                        """.formatted(input))
+                .usingLLM(OpenAIModels.Chat.GPT5)
                 .build();
 
         var debtCheckNode = AIAgentSubgraph.builder()
                 .withInput(AccountRegistryCheckRecord.class)
                 .withOutput(RegistryRecord.class)
                 .limitedTools(registryCheckTool)
-                .withTask(input -> "Check the debt registry (SOLUS) for subject identifier:\n"
-                        + input.subjectIdentifier())
-                .usingLLM(OpenAIModels.Chat.GPT4_1Mini)
+                .withTask(input -> """
+                        You MUST use tools. Do NOT answer with plain text only.
+
+                        Task:
+                        1. Call the debt / SOLUS registry check tool for subjectIdentifier: %s
+                        2. After you receive the tool result, finish by producing a RegistryRecord with:
+                           - subjectIdentifier
+                           - found = true if a negative debt record exists, false otherwise
+                           - note = short explanation taken from the tool result
+
+                        Never invent data. Never respond with free-form text only.
+                        """.formatted(input.subjectIdentifier()))
+                .usingLLM(OpenAIModels.Chat.GPT5)
                 .build();
 
         var personCheckNode = AIAgentSubgraph.builder()
                 .withInput(RegistryRecord.class)
                 .withOutput(PersonRegistryCheckRecord.class)
                 .limitedTools(personRegistryTool)
-                .withTask(input -> "Verify age eligibility for subject identifier:\n"
-                        + input.subjectIdentifier())
-                .usingLLM(OpenAIModels.Chat.GPT4_1Mini)
+                .withTask(input -> """
+                        You MUST use tools. Do NOT answer with plain text only.
+
+                        Task:
+                        1. Call the person registry / age eligibility tool for subjectIdentifier: %s
+                        2. After you receive the tool result, finish by producing a PersonRegistryCheckRecord with:
+                           - subjectIdentifier
+                           - eligible = true/false
+                           - rejectionReason if not eligible
+
+                        Never invent data. Never respond with free-form text only.
+                        """.formatted(input.subjectIdentifier()))
+                .usingLLM(OpenAIModels.Chat.GPT5)
                 .build();
 
         var graph = AIAgentGraphStrategy.builder()
-                .withInput(String.class)
+                .withInput(AccountApplicationRequest.class)
                 .withOutput(PersonEligibilityResult.class);
 
-        graph.edge(graph.nodeStart, extractNode);
-
         graph.edge(AIAgentEdge.builder()
-                .from(extractNode)
+                .from(graph.nodeStart)
                 .to(accountCheckNode)
                 .onCondition(input ->
                         !input.subjectIdentifier().equals("UNKNOWN")
-                        && StringUtils.hasText(input.subjectIdentifier()))
+                                && StringUtils.hasText(input.subjectIdentifier()))
                 .build());
 
         graph.edge(AIAgentEdge.builder()
-                .from(extractNode)
+                .from(graph.nodeStart)
                 .to(askForMissingData)
                 .onCondition(input ->
                         input.subjectIdentifier().equals("UNKNOWN")
-                        || !StringUtils.hasText(input.subjectIdentifier()))
+                                || !StringUtils.hasText(input.subjectIdentifier()))
                 .build());
 
         graph.edge(AIAgentEdge.builder()
@@ -187,8 +238,8 @@ public class AgentService {
         return graph.build();
     }
 
-    public PersonEligibilityResult ask(String message) {
-        return eligibilityAgent.run(message);
+    public String ask(String message) {
+        return chatAgent.run(message);
     }
 
     private static PersonEligibilityResult toAccountRejection(AccountRegistryCheckRecord record) {
