@@ -18,7 +18,7 @@ public class RegistryCheckTool implements ToolSet {
     private static final String KNOWN_DEBTOR_ID = "760506/1234";
 
     @Tool
-    @LLMDescription("Check whether a person has a negative record in SOLUS by their subject identifier (birth number)")
+    @LLMDescription("Check whether a person has a negative record in DEPTH Registry by their subject identifier (birth number)")
     public RegistryRecord checkSolus(
             @LLMDescription("Subject identifier of the person to check, e.g. birth number (rodne cislo)")
             String subjectIdentifier
