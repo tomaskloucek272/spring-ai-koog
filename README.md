@@ -22,7 +22,17 @@ Person eligibility agent is doing three checks:
 - debtCheck (isn't customer in the debt registries?)
 - personCheck (isn't customer too old?)
 
-all of these checks are tools described via LLMDescription annotation so LLM is able to use them correctly.
+all of these checks are tools described via LLMDescription annotation so LLM is able to use them correctly. 
+See: [`createStrategy`](https://github.com/OWNER/REPO/blob/main/src/main/java/com/example/ai_koog/service/AgentService.java#L96-L239)
+
+# Running the demo
+
+Demo uses OPENAI as the LLM so you need to have account at [OPENAI platform](https://platform.openai.com/)
+and then you need to generate the API Key. After that:
+
+    mvn clean install
+
+
 
 
 
