@@ -120,7 +120,7 @@ Now negative test of eligibility agent:
         -H "Content-Type: application/json" \
         -d '{"message": "Now I am John Doe and my subjectIdentifier is 760506/1234 and I want loan"}'
 
-this ID has an negative record in SOLUS register:
+this ID has an negative record in SOLUS register, [see business code](https://github.com/tomaskloucek272/spring-ai-koog/blob/275d31a9186ea196719fd478b2e74a9135f84b8f/src/main/java/com/example/ai_koog/tools/PersonRegistryCheckTool.java#L20)
 
 so eligibility correctly ended there:
 
@@ -134,6 +134,28 @@ so eligibility correctly ended there:
     2026-07-30T15:35:58.640+02:00  INFO 94077 --- [ai-koog] [atcher-worker-3] a.k.a.c.a.entity.AIAgentSubgraphBase     : No enforced execution point, starting from __start__ [subgraph, graphStrategy,       310ef665-0950-46e6-9557-9fcc2a32aba6]
     2026-07-30T15:36:05.180+02:00  INFO 94077 --- [ai-koog] [atcher-worker-2] ai.koog.agents.core.agent.GraphAIAgent   : (agent id: null.1) Executing tool (name: checkSolus, args:     
     {"subjectIdentifier":"760506/1234"}
+
+with response to customer:
+
+    {"subjectIdentifier":"760506/1234","eligible":false,"rejectionReason":"NEGATIVE_DEBT_RECORD","rejectionDetail":"Unpaid consumer loan, 3 installments overdue.","checkedAt":"2026-07-
+    30T15:36:07.519117"}
+
+# Technical note
+
+Both agents are running at the same JVM, alternative is [Agent 2 Agent protocol](https://a2a-protocol.org/latest/)...
+
+<img width="1846" height="1275" alt="image" src="https://github.com/user-attachments/assets/5f6056d8-182b-48a0-a61c-7c386a08f8e1" />
+
+# Where to use AI Agents (my opinion)
+
+- You have an use case where input into your service is uncertain text
+- You're building an AI Agent to replace a real person doing something
+- You want to expose part of your system into some AI ecosystem
+
+In all other cases I would stick with [Zeebe](https://camunda.com/platform/orchestration-engine/) and predictable programming.
+
+
+
 
 
     
