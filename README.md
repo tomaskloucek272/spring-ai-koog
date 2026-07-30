@@ -112,7 +112,7 @@ Response to chat agent / customer:
 
     {"subjectIdentifier":"991231/0099","eligible":true,"rejectionReason":"NONE","rejectionDetail":null,"checkedAt":"2026-07-30T15:12:56.064499"}
 
-Exactly as I instructed him in the task instructions, see [chat agent's systemPrompt](https://github.com/tomaskloucek272/spring-ai-koog/blob/f2bb7d8c9eb325e42c36ca78b94f8817ac680b3e/src/main/java/com/example/ai_koog/service/AgentService.java#L88)
+Exactly as I instructed it in the task instructions, see [chat agent's systemPrompt](https://github.com/tomaskloucek272/spring-ai-koog/blob/f2bb7d8c9eb325e42c36ca78b94f8817ac680b3e/src/main/java/com/example/ai_koog/service/AgentService.java#L88)
 
 Now negative test of eligibility agent:
 
@@ -142,7 +142,7 @@ with response to customer:
 
 # Technical note
 
-Both agents are running at the same JVM, alternative is [Agent 2 Agent protocol](https://a2a-protocol.org/latest/)...
+Both agents are running in the same JVM, alternative is [Agent 2 Agent protocol](https://a2a-protocol.org/latest/)...
 
 <img width="1846" height="1275" alt="image" src="https://github.com/user-attachments/assets/5f6056d8-182b-48a0-a61c-7c386a08f8e1" />
 
