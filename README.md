@@ -43,13 +43,78 @@ App uses [Spring AI Koog spring boot starter](https://blog.jetbrains.com/ai/2026
 
 # Testing the AI Agents
 
-    curl -X POST http://localhost:8080/api/agent/messages -H "Content-Type: application/json" -d '{"message": "Hi, tell me who you are!"}'
+First let's test chat agent before us:
+
+    curl -X POST http://localhost:8080/api/agent/messages \
+    -H "Content-Type: application/json" \
+    -d '{"message": "Hi, tell me who you are!"}'
 
 Response:
 
     I’m an AI assistant that can help answer questions and, in this chat, I can also run account eligibility checks if you provide two details: 
     your **subjectIdentifier** and the **accountType** you’re applying for.
 
+Next question:
+
+    curl -X POST http://localhost:8080/api/agent/messages \
+    -H "Content-Type: application/json" \
+    -d '{"message": "Do you offer some other services?"}'
+
+Response:
+
+    Yes. Common services many banks/financial providers offer (besides opening accounts) include:
+
+    - Cards: debit/credit cards, virtual cards, card controls (freeze/unfreeze), chargebacks
+    - Payments: domestic/international transfers, scheduled payments, direct debits, bill pay
+    - Cash services: ATM withdrawals, cash deposits (where supported), foreign currency
+    - Savings & investing: savings goals, term deposits, funds/ETFs, brokerage (if available)
+    - Lending: personal loans, overdrafts/credit lines, mortgages, refinancing
+    - Digital features: mobile app, budgeting insights, alerts, spending categories, statements
+    - Security: 2FA, transaction notifications, fraud monitoring
+    - Business services (if applicable): business accounts, invoicing, expense cards, payroll
+
+    If you tell me what you’re trying to do (e.g., “send money abroad” or “get a credit card”), I can narrow it down.
+
+Now testing the eligibility agent sitting behind:
+
+    curl -X POST http://localhost:8080/api/agent/messages \
+    -H "Content-Type: application/json" \
+    -d '{"message": "Okay, my name is Tomas Kloucek, my subjectIdentifier is 991231/0099 and I want saving account"}'
+
+Now chat agent invoked person eligibility agent **calling our business code**:
+
+    2026-07-30T15:12:28.162+02:00  INFO 94077 --- [ai-koog] [atcher-worker-1] ai.koog.agents.core.agent.GraphAIAgent   : (agent id: 4cab413b-b0ea-4512-ab4f-34a1d77f7ee9) Executing tool (name:       eligibilityCheck, args: {"input":{"subjectIdentifier":"991231/0099","accountType":"SAVINGS"}}
+    2026-07-30T15:12:28.168+02:00  INFO 94077 --- [ai-koog] [atcher-worker-1] a.k.a.c.a.entity.AIAgentSubgraphBase     : No enforced execution point, starting from __start__ [graphStrategy,         graphStrategy, 4e8d1728-8d87-4f1b-9d97-129b9a70cc58]
+    2026-07-30T15:12:28.170+02:00  INFO 94077 --- [ai-koog] [atcher-worker-1] a.k.a.c.a.entity.AIAgentSubgraphBase     : No enforced execution point, starting from __start__ [subgraph,              graphStrategy, 4e8d1728-8d87-4f1b-9d97-129b9a70cc58] 
+    2026-07-30T15:12:34.116+02:00  INFO 94077 --- [ai-koog] [atcher-worker-1] ai.koog.agents.core.agent.GraphAIAgent   : (agent id: null.0) Executing tool (name: checkAccount, args:                 {"subjectIdentifier":"991231/0099","accountType":"SAVINGS"}
+    2026-07-30T15:12:36.644+02:00  INFO 94077 --- [ai-koog] [atcher-worker-1] a.k.a.c.a.entity.AIAgentSubgraphBase     : No enforced execution point, starting from __start__ [subgraph,              graphStrategy, 4e8d1728-8d87-4f1b-9d97-129b9a70cc58]
+    2026-07-30T15:12:48.320+02:00  INFO 94077 --- [ai-koog] [atcher-worker-2] ai.koog.agents.core.agent.GraphAIAgent   : (agent id: null.0) Executing tool (name: checkSolus, args:            
+    {"subjectIdentifier":"991231/0099"}
+    2026-07-30T15:12:50.184+02:00  INFO 94077 --- [ai-koog] [atcher-worker-2] a.k.a.c.a.entity.AIAgentSubgraphBase     : No enforced execution point, starting from __start__ [subgraph,         
+    graphStrategy, 4e8d1728-8d87-4f1b-9d97-129b9a70cc58]
+    2026-07-30T15:12:54.636+02:00  INFO 94077 --- [ai-koog] [atcher-worker-2] ai.koog.agents.core.agent.GraphAIAgent   : (agent id: null.0) Executing tool (name: checkApplicant, args:       
+    {"subjectIdentifier":"991231/0099"}
+
+     Tool call trace
+
+      ┌──────────────┬──────────────────┬──────────┬───────────────────────────────────────────────────────────────────────┐
+      │ Time (UTC+2) │       Tool       │  Worker  │                                 Args                                  │
+      ├──────────────┼──────────────────┼──────────┼───────────────────────────────────────────────────────────────────────┤
+      │ 15:12:28.162 │ eligibilityCheck │ worker-1 │ {"input":{"subjectIdentifier":"991231/0099","accountType":"SAVINGS"}} │
+      ├──────────────┼──────────────────┼──────────┼───────────────────────────────────────────────────────────────────────┤
+      │ 15:12:34.116 │ checkAccount     │ worker-1 │ {"subjectIdentifier":"991231/0099","accountType":"SAVINGS"}           │
+      ├──────────────┼──────────────────┼──────────┼───────────────────────────────────────────────────────────────────────┤
+      │ 15:12:48.320 │ checkSolus       │ worker-2 │ {"subjectIdentifier":"991231/0099"}                                   │
+      ├──────────────┼──────────────────┼──────────┼───────────────────────────────────────────────────────────────────────┤
+      │ 15:12:54.636 │ checkApplicant   │ worker-2 │ {"subjectIdentifier":"991231/0099"}                                   │
+      └──────────────┴──────────────────┴──────────┴───────────────────────────────────────────────────────────────────────┘
+Response to chat agent / customer:
+
+    {"subjectIdentifier":"991231/0099","eligible":true,"rejectionReason":"NONE","rejectionDetail":null,"checkedAt":"2026-07-30T15:12:56.064499"}
+
+Exactly as I instructed him:
+
+    
 
 
 
