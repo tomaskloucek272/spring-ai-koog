@@ -112,7 +112,29 @@ Response to chat agent / customer:
 
     {"subjectIdentifier":"991231/0099","eligible":true,"rejectionReason":"NONE","rejectionDetail":null,"checkedAt":"2026-07-30T15:12:56.064499"}
 
-Exactly as I instructed him:
+Exactly as I instructed him in the task instructions, see [chat agent's systemPrompt](https://github.com/tomaskloucek272/spring-ai-koog/blob/f2bb7d8c9eb325e42c36ca78b94f8817ac680b3e/src/main/java/com/example/ai_koog/service/AgentService.java#L88)
+
+Now negative test of eligibility agent:
+
+    curl -X POST http://localhost:8080/api/agent/messages \
+        -H "Content-Type: application/json" \
+        -d '{"message": "Now I am John Doe and my subjectIdentifier is 760506/1234 and I want loan"}'
+
+this ID has an negative record in SOLUS register:
+
+so eligibility correctly ended there:
+
+    2026-07-30T15:35:51.240+02:00  INFO 94077 --- [ai-koog] [atcher-worker-1] ai.koog.agents.core.agent.GraphAIAgent   : (agent id: 4cab413b-b0ea-4512-ab4f-34a1d77f7ee9) Executing tool (name:     
+    eligibilityCheck, args: {"input":{"subjectIdentifier":"760506/1234","accountType":"LOAN"}}
+    2026-07-30T15:35:51.242+02:00  INFO 94077 --- [ai-koog] [atcher-worker-1] a.k.a.c.a.entity.AIAgentSubgraphBase     : No enforced execution point, starting from __start__ [graphStrategy,     
+    graphStrategy, 310ef665-0950-46e6-9557-9fcc2a32aba6]
+    2026-07-30T15:35:51.243+02:00  INFO 94077 --- [ai-koog] [atcher-worker-3] a.k.a.c.a.entity.AIAgentSubgraphBase     : No enforced execution point, starting from __start__ [subgraph, graphStrategy,       310ef665-0950-46e6-9557-9fcc2a32aba6]
+    2026-07-30T15:35:57.219+02:00  INFO 94077 --- [ai-koog] [atcher-worker-3] ai.koog.agents.core.agent.GraphAIAgent   : (agent id: null.1) Executing tool (name: checkAccount, args:         
+    {"subjectIdentifier":"760506/1234","accountType":"LOAN"}
+    2026-07-30T15:35:58.640+02:00  INFO 94077 --- [ai-koog] [atcher-worker-3] a.k.a.c.a.entity.AIAgentSubgraphBase     : No enforced execution point, starting from __start__ [subgraph, graphStrategy,       310ef665-0950-46e6-9557-9fcc2a32aba6]
+    2026-07-30T15:36:05.180+02:00  INFO 94077 --- [ai-koog] [atcher-worker-2] ai.koog.agents.core.agent.GraphAIAgent   : (agent id: null.1) Executing tool (name: checkSolus, args:     
+    {"subjectIdentifier":"760506/1234"}
+
 
     
 
