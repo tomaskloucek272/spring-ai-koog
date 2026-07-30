@@ -10,7 +10,7 @@ Everything else is directed by LLM (AI).
 # What Koog framework adds to it
 
 When asking the LLM prompt to solve something then result is unpredictable. Basically you are having just a hope.
-**With Koog you are giving the LLM the guardrails, the contract (your code)** of what needs to be done to solve your problem. 
+**With [Koog](https://docs.koog.ai/) you are giving the LLM the guardrails, the contract (your code)** of what needs to be done to solve your problem. 
 
 Imagine you want a chat AI agent which eventually calls bank account eligibility AI agent (containing your business code):
 
@@ -18,19 +18,20 @@ Imagine you want a chat AI agent which eventually calls bank account eligibility
 
 Person eligibility agent is doing three checks:
 
-- accountCheck (does customer already have requested account?...etc)
-- debtCheck (isn't customer in the debt registries?)
-- personCheck (isn't customer too old?)
+    - accountCheck (does customer already have requested account?...etc)
+    - debtCheck (isn't customer in the debt registries?)
+    - personCheck (isn't customer too old?)
 
 all of these checks are tools described via LLMDescription annotation so LLM is able to use them correctly. 
-See: [`createStrategy`]([https://github.com/OWNER/REPO/blob/main/src/main/java/com/example/ai_koog/service/AgentService.java#L96-L239](https://github.com/tomaskloucek272/spring-ai-koog/blob/14f1fbd7a2d6f6ca58634b178b4c978880ec99d0/src/main/java/com/example/ai_koog/service/AgentService.java#L96)
+See: [`createStrategy`]([https://github.com/tomaskloucek272/spring-ai-koog/blob/f632bb0f861c0c2b29d99101cb8c524bb31669f4/src/main/java/com/example/ai_koog/service/AgentService.java#L96])
 
 # Running the demo
 
-Demo uses OPENAI as the LLM so you need to have account at [OPENAI platform](https://platform.openai.com/)
-and then you need to generate the API Key. After that:
+Demo uses OPENAI as the LLM so you need to have account at [OPENAI platform](https://platform.openai.com/) and then 
+you need to generate the API Key. After that:
 
     mvn clean install
+
 
 
 
