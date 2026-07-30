@@ -37,7 +37,7 @@ and to start it:
 
     OPENAI_API_KEY=<YOUR_API_KEY> java -jar target/ai-koog-0.0.1-SNAPSHOT.jar
 
-App uses [Spring AI Koog spring boot starter](https://blog.jetbrains.com/ai/2026/04/introducing-koog-integration-for-spring-ai-smarter-orchestration-for-your-agents/) which autowires LLM prompt for us so you should see this after start:
+App uses [Spring AI Koog integration starter](https://blog.jetbrains.com/ai/2026/04/introducing-koog-integration-for-spring-ai-smarter-orchestration-for-your-agents/) which autowires LLM prompt for us so you should see this after start:
 
 <img width="2326" height="741" alt="image" src="https://github.com/user-attachments/assets/20c1b61d-603a-429f-b4aa-1d153d74c9ed" />
 
