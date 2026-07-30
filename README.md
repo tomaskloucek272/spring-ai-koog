@@ -41,8 +41,14 @@ App uses [Spring AI Koog spring boot starter](https://blog.jetbrains.com/ai/2026
 
 <img width="2326" height="741" alt="image" src="https://github.com/user-attachments/assets/20c1b61d-603a-429f-b4aa-1d153d74c9ed" />
 
+# Testing the AI Agents
 
+    curl -X POST http://localhost:8080/api/agent/messages -H "Content-Type: application/json" -d '{"message": "Hi, tell me who you are!"}'
 
+Response:
+
+    I’m an AI assistant that can help answer questions and, in this chat, I can also run account eligibility checks if you provide two details: 
+    your **subjectIdentifier** and the **accountType** you’re applying for.
 
 
 
