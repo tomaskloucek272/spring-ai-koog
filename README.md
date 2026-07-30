@@ -16,6 +16,17 @@ Imagine you want a chat AI agent which eventually calls bank account eligibility
 
 <img width="1733" height="1637" alt="image" src="https://github.com/user-attachments/assets/576be73a-b8bb-4d53-986c-8f591787b1b9" />
 
+Person eligibility agent is doing three checks:
+
+- accountCheck (does customer already have requested account?...etc)
+- debtCheck (isn't customer in the debt registries?)
+- personCheck (isn't customer too old?)
+
+all of these checks are tools described via LLMDescription annotation so LLM is able to use them correctly.
+
+
+
+
 
 
 
