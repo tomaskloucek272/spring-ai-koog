@@ -24,7 +24,7 @@ Person eligibility agent is doing three checks:
     - personCheck (isn't customer too old?)
 
 all of these checks are tools described via LLMDescription annotation so LLM is able to use them correctly. 
-See: [`createStrategy`]([https://github.com/tomaskloucek272/spring-ai-koog/blob/f632bb0f861c0c2b29d99101cb8c524bb31669f4/src/main/java/com/example/ai_koog/service/AgentService.java#L96])
+See: [`createStrategy`](https://github.com/tomaskloucek272/spring-ai-koog/blob/f632bb0f861c0c2b29d99101cb8c524bb31669f4/src/main/java/com/example/ai_koog/service/AgentService.java#L96)
 
 # Running the demo
 
