@@ -1,4 +1,4 @@
-## Building AI agents with Spring AI 2.0 backboned via Koog AI framework 
+# Building AI agents with Spring AI 2.0 backboned via Koog AI framework 
 
 When building AI agent programmer's mindset needs to be:
 
@@ -7,7 +7,7 @@ When building AI agent programmer's mindset needs to be:
 
 Everything else is directed by LLM (AI).
 
-# What Koog framework adds to it
+## What Koog framework adds to it
 
 When asking the LLM prompt to solve something then result is unpredictable. Basically you are having just a hope.
 **With [Koog](https://docs.koog.ai/) you are giving the LLM the guardrails, the contract (your tools - code)** of what needs to be done to solve your problem. 
@@ -26,7 +26,7 @@ Person eligibility agent is doing three checks:
 all of these checks are tools described via LLMDescription annotation so LLM is able to use them correctly. 
 See: [`createStrategy`](https://github.com/tomaskloucek272/spring-ai-koog/blob/f632bb0f861c0c2b29d99101cb8c524bb31669f4/src/main/java/com/example/ai_koog/service/AgentService.java#L96)
 
-# Running the demo
+## Running the demo
 
 Demo uses OPENAI as the LLM so you need to have account at [OPENAI platform](https://platform.openai.com/) and then 
 you need to generate the API Key. After that to compile and build:
@@ -41,7 +41,7 @@ App uses [Spring AI Koog spring boot starter](https://blog.jetbrains.com/ai/2026
 
 <img width="2326" height="741" alt="image" src="https://github.com/user-attachments/assets/20c1b61d-603a-429f-b4aa-1d153d74c9ed" />
 
-# Testing the AI Agents
+## Testing the AI Agents
 
 First let's test chat agent before us:
 
@@ -143,7 +143,7 @@ with response to customer:
     {"subjectIdentifier":"760506/1234","eligible":false,"rejectionReason":"NEGATIVE_DEBT_RECORD","rejectionDetail":"Unpaid consumer loan, 3 installments overdue.","checkedAt":"2026-07-
     30T15:36:07.519117"}
 
-# Technical note
+## Technical note
 
 Both agents are running in the same JVM, alternative is [Agent 2 Agent protocol](https://a2a-protocol.org/latest/)...
 
