@@ -10,9 +10,10 @@ Everything else is directed by LLM (AI).
 # What Koog framework adds to it
 
 When asking the LLM prompt to solve something then result is unpredictable. Basically you are having just a hope.
-**With [Koog](https://docs.koog.ai/) you are giving the LLM the guardrails, the contract (your code)** of what needs to be done to solve your problem. 
+**With [Koog](https://docs.koog.ai/) you are giving the LLM the guardrails, the contract (your tools - code)** of what needs to be done to solve your problem. 
 
-Imagine you want a chat AI agent which eventually calls bank account eligibility AI agent (containing your business code):
+Imagine you want a chat AI agent sitting in the front of the customer
+which eventually calls bank account eligibility AI agent (containing your business code) once he has complete customer's data:
 
 <img width="1733" height="1637" alt="image" src="https://github.com/user-attachments/assets/576be73a-b8bb-4d53-986c-8f591787b1b9" />
 
@@ -28,9 +29,17 @@ See: [`createStrategy`]([https://github.com/tomaskloucek272/spring-ai-koog/blob/
 # Running the demo
 
 Demo uses OPENAI as the LLM so you need to have account at [OPENAI platform](https://platform.openai.com/) and then 
-you need to generate the API Key. After that:
+you need to generate the API Key. After that to compile and build:
 
     mvn clean install
+
+and to start it:
+
+    OPENAI_API_KEY=<YOUR_API_KEY> java -jar target/ai-koog-0.0.1-SNAPSHOT.jar
+
+App uses [Spring AI Koog spring boot starter](https://blog.jetbrains.com/ai/2026/04/introducing-koog-integration-for-spring-ai-smarter-orchestration-for-your-agents/) which autowires LLM prompt for us so you should see this after start:
+
+<img width="2326" height="741" alt="image" src="https://github.com/user-attachments/assets/20c1b61d-603a-429f-b4aa-1d153d74c9ed" />
 
 
 
