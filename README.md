@@ -19,9 +19,9 @@ which eventually calls bank account eligibility AI agent (containing your busine
 
 Person eligibility agent is doing three checks:
 
-    - accountCheck (does customer already have requested account?...etc)
-    - debtCheck (isn't customer in the debt registries?)
-    - personCheck (isn't customer too old?)
+    - checkAccount (does customer already have requested account?...etc)
+    - checkSolus (isn't customer in the debt registry?)
+    - checkApplicant (isn't customer too old?)
 
 all of these checks are tools described via LLMDescription annotation so LLM is able to use them correctly. 
 See: [`createStrategy`](https://github.com/tomaskloucek272/spring-ai-koog/blob/f632bb0f861c0c2b29d99101cb8c524bb31669f4/src/main/java/com/example/ai_koog/service/AgentService.java#L96)
@@ -75,7 +75,7 @@ Response:
 
     If you tell me what you’re trying to do (e.g., “send money abroad” or “get a credit card”), I can narrow it down.
 
-Now testing the eligibility agent sitting behind:
+Now testing the eligibility agent sitting behind, positive test first:
 
     curl -X POST http://localhost:8080/api/agent/messages \
     -H "Content-Type: application/json" \
@@ -95,19 +95,22 @@ Now chat agent invoked person eligibility agent **calling our business code**:
     2026-07-30T15:12:54.636+02:00  INFO 94077 --- [ai-koog] [atcher-worker-2] ai.koog.agents.core.agent.GraphAIAgent   : (agent id: null.0) Executing tool (name: checkApplicant, args:       
     {"subjectIdentifier":"991231/0099"}
 
-     Tool call trace
+### Tool call trace
 
-      ┌──────────────┬──────────────────┬──────────┬───────────────────────────────────────────────────────────────────────┐
-      │ Time (UTC+2) │       Tool       │  Worker  │                                 Args                                  │
-      ├──────────────┼──────────────────┼──────────┼───────────────────────────────────────────────────────────────────────┤
-      │ 15:12:28.162 │ eligibilityCheck │ worker-1 │ {"input":{"subjectIdentifier":"991231/0099","accountType":"SAVINGS"}} │
-      ├──────────────┼──────────────────┼──────────┼───────────────────────────────────────────────────────────────────────┤
-      │ 15:12:34.116 │ checkAccount     │ worker-1 │ {"subjectIdentifier":"991231/0099","accountType":"SAVINGS"}           │
-      ├──────────────┼──────────────────┼──────────┼───────────────────────────────────────────────────────────────────────┤
-      │ 15:12:48.320 │ checkSolus       │ worker-2 │ {"subjectIdentifier":"991231/0099"}                                   │
-      ├──────────────┼──────────────────┼──────────┼───────────────────────────────────────────────────────────────────────┤
-      │ 15:12:54.636 │ checkApplicant   │ worker-2 │ {"subjectIdentifier":"991231/0099"}                                   │
-      └──────────────┴──────────────────┴──────────┴───────────────────────────────────────────────────────────────────────┘
+```
+┌──────────────┬──────────────────┬──────────┬───────────────────────────────────────────────────────────────────────┐
+│ Time (UTC+2) │       Tool       │  Worker  │                                 Args                                  │
+├──────────────┼──────────────────┼──────────┼───────────────────────────────────────────────────────────────────────┤
+│ 15:12:28.162 │ eligibilityCheck │ worker-1 │ {"input":{"subjectIdentifier":"991231/0099","accountType":"SAVINGS"}} │
+├──────────────┼──────────────────┼──────────┼───────────────────────────────────────────────────────────────────────┤
+│ 15:12:34.116 │ checkAccount     │ worker-1 │ {"subjectIdentifier":"991231/0099","accountType":"SAVINGS"}           │
+├──────────────┼──────────────────┼──────────┼───────────────────────────────────────────────────────────────────────┤
+│ 15:12:48.320 │ checkSolus       │ worker-2 │ {"subjectIdentifier":"991231/0099"}                                   │
+├──────────────┼──────────────────┼──────────┼───────────────────────────────────────────────────────────────────────┤
+│ 15:12:54.636 │ checkApplicant   │ worker-2 │ {"subjectIdentifier":"991231/0099"}                                   │
+└──────────────┴──────────────────┴──────────┴───────────────────────────────────────────────────────────────────────┘
+```
+
 Response to chat agent / customer:
 
     {"subjectIdentifier":"991231/0099","eligible":true,"rejectionReason":"NONE","rejectionDetail":null,"checkedAt":"2026-07-30T15:12:56.064499"}
@@ -148,29 +151,10 @@ Both agents are running in the same JVM, alternative is [Agent 2 Agent protocol]
 
 # Where to use AI Agents (my opinion)
 
-- You have an use case where input into your service is uncertain text
+- You have a use case where input into your service is uncertain text
 - You're building an AI Agent to replace a real person doing something
 - You want to expose part of your system into some AI ecosystem
 
-In all other cases I would stick with [Zeebe](https://camunda.com/platform/orchestration-engine/) and predictable programming.
-
-
-
-
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+If the flow is fixed in advance (e.g. you already have a UI that drives every step in a known order), skip the LLM entirely 
+and use classic predictive programming or an orchestration engine like Zeebe. 
+Koog also builds a graph, but the LLM chooses the path at runtime from free-form text—the flow is never predetermined.
